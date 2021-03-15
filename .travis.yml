@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t sgriggs/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true sgriggs/react-test npm test
+
+after_success:
+  - docker build -t sgriggs/multi-client ./client
+  - docker build -t sgriggs/multi-nginx ./nginx
+  - docker build -t sgriggs/multi-server ./server
+  - docker build -t sgriggs/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Push images to docker hub
+  - docker push sgriggs/multi-client
+  - docker push sgriggs/multi-nginx
+  - docker push sgriggs/multi-server
+  - docker push sgriggs/multi-worker
